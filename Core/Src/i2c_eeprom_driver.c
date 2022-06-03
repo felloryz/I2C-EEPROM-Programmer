@@ -120,7 +120,7 @@ HAL_StatusTypeDef I2C_EEPROM_CommandParse(UART_HandleTypeDef *huart, argStruct *
 		  int page;
 		  for (page = 1; page < 512; ++page)
 		  {
-			  if ((args->addr > (64 * (page - 1))) && (args->addr < (64 * page - 1)))
+			  if ((args->addr >= (64 * (page - 1))) && (args->addr < (64 * page)))
 			  {
 				  break;
 			  }
@@ -141,7 +141,6 @@ HAL_StatusTypeDef I2C_EEPROM_CommandParse(UART_HandleTypeDef *huart, argStruct *
 			  args->page = (uint16_t)page;
 		  }
 	  }
-
 
 	  if (mode == 'w')
 	  {
@@ -164,22 +163,21 @@ void I2C_EEPROM_AddressRead(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, 
 	HAL_Delay(1);
 
 	char buffer[20];
-	sprintf(buffer, "%04x:   %02x\n\r", MemAddress, data);
+	sprintf(buffer, "%04x:   %02x\n\r\n\r", MemAddress, data);
 
 	HAL_UART_Transmit(huart, (uint8_t *)buffer, strlen(buffer), 10);
 }
 
 void I2C_EPPROM_PageRead(UART_HandleTypeDef *huart, I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint16_t pageNumber)
 {
-	uint16_t memAddress = 64 * (pageNumber - 1);
+//	uint16_t memAddress = 64 * (pageNumber - 1);
 	for (unsigned int base = (0 + (pageNumber - 1) * 64); base < (64 + (pageNumber - 1) * 64); base += 16)
 	{
 	  uint8_t data[16] = { 0 };
 	  for (uint16_t offset = 0; offset <= 15; offset++)
 	  {
-		  HAL_I2C_Mem_Read(hi2c, DevAddress, (memAddress + base + offset), I2C_MEMADD_SIZE_16BIT,
-						   &data[offset], 1, 10);
-//		  HAL_Delay(10);
+		  HAL_I2C_Mem_Read(hi2c, DevAddress, (uint16_t)(base + offset), I2C_MEMADD_SIZE_16BIT, &data[offset], 1, 10);
+		  HAL_Delay(1);
 	  }
 
 	  char buffer[80] = { 0 };

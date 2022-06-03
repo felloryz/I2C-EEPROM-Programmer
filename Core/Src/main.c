@@ -128,8 +128,7 @@ int main(void)
 	  HAL_UART_Transmit(UART1, (uint8_t *)message, sizeof(message), 10);
 
 	  /* Receive unknown length data via UART */
-
-	  I2C_EEPROM_UartReceive(UART1, buffer, 120);
+	  I2C_EEPROM_UartReceive(UART1, buffer, 200);
 
 	  HAL_UART_Transmit(UART1, (uint8_t *)buffer, strlen(buffer), 10);
 	  HAL_UART_Transmit(UART1, (uint8_t *)"\n\r", 2, 10);
@@ -137,23 +136,21 @@ int main(void)
 	  char errorMessage[] = "Incorrect format\n\r";
 
 	  char dataString[140] = { 0 };
-
-	  if (I2C_EEPROM_CommandParse(UART1, &args, buffer, dataString) != HAL_OK)
+	  if (I2C_EEPROM_CommandParse(UART1, &args, buffer, dataString) != HAL_OK) // parse UART buffer
 	  {
 		  HAL_UART_Transmit(UART1, (uint8_t *)errorMessage, strlen(errorMessage), 10);
 	  }
 	  else
 	  {
-		  char tpm[200] = { 0 };
 		  if (args.data == NULL)
 		  {
 			  char dataIsEmpty[] = "No data";
 			  args.data = dataIsEmpty;
 		  }
-		  sprintf(tpm, "\neepromAddr = 0x%x\n\rmode = %c\n\raddrFlag = %d\n\raddr = 0x%x\n\rpage = %d\n\rdata = %s\n\r\n\r",
-				  (int)args.eepromAddr, args.mode, args.addrFlag, (int)args.addr, (int)args.page, args.data);
-		  HAL_UART_Transmit(UART1, (uint8_t *)tpm, strlen(tpm), 10);
-
+		  //		  char tpm[200] = { 0 };
+//		  sprintf(tpm, "\neepromAddr = 0x%x\n\rmode = %c\n\raddrFlag = %d\n\raddr = 0x%x\n\rpage = %d\n\rdata = %s\n\r\n\r",
+//				  (int)args.eepromAddr, args.mode, args.addrFlag, (int)args.addr, (int)args.page, args.data);
+//		  HAL_UART_Transmit(UART1, (uint8_t *)tpm, strlen(tpm), 10);
 
 		  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 		  if (args.mode == 'r')
@@ -170,8 +167,8 @@ int main(void)
 		  else if (args.mode == 'w')
 		  {
 			  uint8_t targetData[80] = { 0 };
-			  strcpy(dataString, args.data);
-			  uint16_t dataSize = I2C_EEPROM_StringToHex(dataString, targetData);
+//			  strcpy(dataString, args.data);
+			  uint16_t dataSize = I2C_EEPROM_StringToHex(args.data, targetData);
 			  if (args.addrFlag == 0)
 			  {
 				  I2C_EEPROM_AddressWrite(EEPROM_I2C, args.eepromAddr, args.addr, targetData, dataSize);
@@ -180,24 +177,11 @@ int main(void)
 			  else if (args.addrFlag == 1)
 			  {
 				  I2C_EEPROM_PageWrite(EEPROM_I2C, args.eepromAddr, args.page, targetData, dataSize);
-				  HAL_Delay(100);
 				  I2C_EPPROM_PageRead(UART1, EEPROM_I2C, args.eepromAddr, args.page);
 			  }
 		  }
 		  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 	  }
-
-
-//	  /* Convert ASCII string to hex array */
-//	  uint8_t targetData[80] = { 0 };
-//	  uint16_t dataSize = I2C_EEPROM_StringToHex(buffer, targetData);
-//
-//	  /* EEPROM byte write */
-//	  HAL_I2C_Mem_Write(EEPROM_I2C, (uint16_t)EEPROM_ADDR1, 0x0000, I2C_MEMADD_SIZE_16BIT, targetData, dataSize, 10);
-//	  HAL_Delay(100);
-//
-//	  /* EEPROM page read */
-//	  I2C_EPPROM_PageRead(UART1, EEPROM_I2C, (uint16_t)EEPROM_ADDR1, 1);
 
     /* USER CODE END WHILE */
 
